@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zama IQ Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-main: #0e1118;
+      --card-bg: #1a1f2b;
+      --accent1: #4ade80;
+      --accent2: #22d3ee;
+      --text-light: #f1f3f5;
+      --text-muted: #8a8f99;
+      --border-color: #343a40;
+      --radius: 14px;
+      --transition: 0.3s ease;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: var(--bg-main);
+      color: var(--text-light);
+      font-family: 'Poppins', sans-serif;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+      padding:20px;
+    }
+    .container {
+      width:100%;
+      max-width:760px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      position: relative;
+    }
+    .header {
+      padding:50px 30px;
+      text-align:center;
+      background: linear-gradient(45deg, var(--accent1), var(--accent2));
+    }
+    .header h1 {
+      font-size:2.8rem;
+      color:#fff;
+      letter-spacing:1px;
+    }
+    .header p {
+      margin-top:10px;
+      color: var(--text-light);
+      font-size:1.1rem;
+    }
+    .section {
+      padding:30px;
+      display:none;
+    }
+    .section.active {
+      display:block;
+      animation: fadeIn 0.4s var(--transition);
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform: translateY(20px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .intro { text-align:center; }
+    .intro h2 { font-size:1.9rem; margin-bottom:14px; }
+    .intro p {
+      font-size:1rem;
+      line-height:1.6;
+      color: var(--text-muted);
+      margin-bottom:30px;
+      max-width:650px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    .btn {
+      padding:14px 36px;
+      background: var(--accent2);
+      color:#fff;
+      font-weight:600;
+      border:none;
+      border-radius: var(--radius);
+      cursor:pointer;
+      transition: background var(--transition), transform var(--transition);
+    }
+    .btn:hover { background: var(--accent1); transform: translateY(-2px); }
+    .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--text-light); }
+    .loader {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:180px;
+    }
+    .loader span {
+      width:14px;
+      height:14px;
+      margin:0 5px;
+      background: var(--accent2);
+      border-radius:50%;
+      display:inline-block;
+      animation: bounce 0.6s infinite alternate;
+    }
+    .loader span:nth-child(2){ animation-delay:0.2s; }
+    .loader span:nth-child(3){ animation-delay:0.4s; }
+    @keyframes bounce { to { transform: translateY(-15px); opacity:0.6; } }
+    .question-counter { text-align:center; color: var(--text-muted); margin-bottom:20px; font-size:0.95rem; }
+    .progress-bar { width:100%; height:10px; background: var(--border-color); border-radius:5px; overflow:hidden; margin-bottom:30px; }
+    .progress-fill { height:100%; width:0%; background: var(--accent1); transition: width var(--transition); }
+    .question-card { background: var(--card-bg); padding:28px; border:1px solid var(--border-color); border-radius: var(--radius); margin-bottom:30px; }
+    .question-card h3 { font-size:1.4rem; margin-bottom:22px; color: var(--text-light); }
+    .options { display:grid; gap:16px; }
+    .option {
+      padding:18px 22px;
+      background:#2b3038;
+      border:2px solid #343a40;
+      border-radius: var(--radius);
+      cursor:pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .option:hover { background:#323a45; border-color: var(--accent1); }
+    .option.correct { border-color:#51cf66; background:rgba(81,207,102,0.15); }
+    .option.incorrect { border-color:#f03e3e; background:rgba(240,62,62,0.15); }
+    .feedback { text-align:center; margin-top:22px; font-size:1rem; font-weight:600; display:none; }
+    .results { text-align:center; padding:40px 30px; }
+    .results .score {
+      font-size:3.4rem;
+      background: linear-gradient(45deg, var(--accent2), var(--accent1));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      margin:30px 0;
+    }
+    .results .message { font-size:1.3rem; color: var(--text-light); margin-bottom:24px; }
+    #chartContainer { width:100%; max-width:480px; margin:0 auto 30px; }
+    @media(max-width:600px){
+      .header h1 { font-size:2.2rem; }
+      .intro h2 { font-size:1.6rem; }
+      .question-card h3 { font-size:1.2rem; }
+      .btn { padding:12px 28px; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Top Referral Link Section (updated to zama.ai) -->
+    <div style="text-align:center; padding:20px; background: var(--card-bg);">
+      <a href="https://www.zama.ai/" target="_blank" style="
+            font-size:1.2rem;
+            color: var(--accent2);
+            text-decoration:none;
+            font-weight:600;
+          ">
+        Open Zama
+      </a>
+    </div>
+
+    <div class="header">
+      <h1>Zama IQ Challenge</h1>
+      <p>Test your knowledge on Zama, Fully Homomorphic Encryption (FHE) & privacy-preserving blockchain tech</p>
+    </div>
+
+    <!-- Start / Intro Screen -->
+    <div id="start-screen" class="section active">
+      <div class="intro">
+        <h2>Project Overview</h2>
+        <p>
+          Welcome to the <strong>Zama IQ Challenge</strong> — an interactive quiz to test your understanding of Zama's technology, FHE, and its use cases in blockchain and AI. Dive in and put your crypto-privacy knowledge to the test!
+        </p>
+      </div>
+      <div style="text-align:center">
+        <button class="btn" onclick="goToLoading()">Start Quiz</button>
+      </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="section">
+      <div class="loader"><span></span><span></span><span></span></div>
+      <p style="text-align:center; color: var(--text-muted); margin-top:10px;">Loading questions…</p>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" class="section">
+      <div class="question-counter"><span id="cur">1</span> / <span id="tot">10</span></div>
+      <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
+      <div class="question-card">
+        <h3 id="qtext"></h3>
+        <div class="options" id="optbox"></div>
+      </div>
+      <div id="fb" class="feedback"></div>
+      <div style="text-align:center"><button id="nextBtn" class="btn" onclick="nextQ()" disabled>Next</button></div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="result-screen" class="section results">
+      <div class="score" id="scorePct">0%</div>
+      <div class="message" id="msg"></div>
+      <div id="chartContainer"><canvas id="resultChart"></canvas></div>
+      <p>Correct: <span id="corr">0</span> | Wrong: <span id="wrng">0</span> | Total: <span id="total">10</span></p>
+
+      <!-- Adjusted Play Again button (with margin-top:40px) -->
+      <div style="text-align:center; margin-top:20px;">
+        <button class="btn" onclick="restartQuiz()">Play Again</button>
+      </div>
+    </div>
+
+    <!-- Bottom “Created By” Section -->
+    <div style="padding:20px 0; text-align:center; background: var(--card-bg);">
+      <span style="color: var(--text-muted); font-size:0.9rem;">Created by</span>
+      <a href="https://x.com/nexodrops" target="_blank" style="
+            margin-left:8px;
+            color: var(--accent1);
+            text-decoration:none;
+            font-weight:600;
+          ">
+        🐦 @nexodrops
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    // 10 MCQs about Zama (correct answers are zero-based indices)
+    const quizData = [
+      {
+        q: "What is Zama primarily focused on building?",
+        o: [
+          "Public blockchain infrastructure only",
+          "Traditional cloud storage solutions",
+          "State-of-the-art Fully Homomorphic Encryption (FHE) solutions for blockchain and AI",
+          "Consumer mobile apps"
+        ],
+        c: 2
+      },
+      {
+        q: "What does Fully Homomorphic Encryption (FHE) allow you to do?",
+        o: [
+          "Only encrypt data at rest",
+          "Compute on encrypted data without needing to decrypt it first",
+          "Store data more cheaply",
+          "Make data fully public for transparency"
+        ],
+        c: 1
+      },
+      {
+        q: "According to Zama, why shouldn’t people have to worry about privacy?",
+        o: [
+          "Because privacy doesn’t matter",
+          "Because technology will make privacy obsolete and unnecessary",
+          "Because data should always be public",
+          "Because encryption is only needed for sensitive data"
+        ],
+        c: 1
+      },
+      {
+        q: "Which of the following best describes Zama’s “Confidential Blockchain Protocol”?",
+        o: [
+          "A new layer 1 blockchain competing with Ethereum",
+          "A confidentiality layer that works on top of any existing L1 or L2, enabling smart contracts with encrypted state and inputs",
+          "Just a database encryption tool for cloud use",
+          "A cryptocurrency exchange platform"
+        ],
+        c: 1
+      },
+      {
+        q: "Zama manages its open-source projects via which of the following?",
+        o: [
+          "Proprietary closed-source libraries only",
+          "Open-source libraries such as TFHE-rs, Concrete, Concrete ML on GitHub",
+          "Only hardware patents",
+          "None of the above"
+        ],
+        c: 1
+      },
+      {
+        q: "What is one of the major use-cases Zama highlights for its encryption technology?",
+        o: [
+          "Only gaming applications",
+          "Confidential finance, on-chain lending and yield farming, private auctions, RWA tokenisation",
+          "Only social media encryption",
+          "Only IoT device connectivity"
+        ],
+        c: 1
+      },
+      {
+        q: "Which statement is correct about Zama’s funding as of mid-2025?",
+        o: [
+          "Zama has not raised any funding",
+          "Zama raised US$ 57 million and reached a valuation above US$ 1 billion",
+          "Zama is valued at less than US$ 100 million",
+          "Zama’s business model is not investment-backed"
+        ],
+        c: 1
+      },
+      {
+        q: "Why is FHE considered a “holy grail” of cryptography according to Zama?",
+        o: [
+          "Because it’s cheap to run",
+          "Because it allows for computation on encrypted data and enables end-to-end encryption by default",
+          "Because it replaces public-key encryption entirely",
+          "Because it’s only for academic use"
+        ],
+        c: 1
+      },
+      {
+        q: "Which of the following best describes Zama’s stance on learning cryptography for developers using their tools?",
+        o: [
+          "Developers must learn advanced cryptography before using the tools",
+          "Developers can use familiar programming environments and the FHE complexity is abstracted away",
+          "They only support one programming language",
+          "The tools are only for cryptography researchers"
+        ],
+        c: 1
+      },
+      {
+        q: "In Zama’s Confidential Blockchain Protocol, what does “programmable confidentiality” mean?",
+        o: [
+          "You cannot specify any confidentiality rules",
+          "Smart contracts define who can decrypt what data, giving developers full control over confidentiality rules",
+          "Only one user ever sees everything",
+          "Data is always public with no controls"
+        ],
+        c: 1
+      }
+    ];
+
+    let idx = 0;
+    let correctCount = 0;
+
+    function goToLoading(){
+      document.getElementById('start-screen').classList.remove('active');
+      document.getElementById('loading-screen').classList.add('active');
+      setTimeout(()=>{
+        document.getElementById('loading-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        document.getElementById('tot').textContent = quizData.length;
+        loadQ();
+      }, 700);
+    }
+
+    function loadQ(){
+      if(idx >= quizData.length) return showResult();
+      const q = quizData[idx];
+      document.getElementById('cur').textContent = idx + 1;
+      document.getElementById('qtext').textContent = q.q;
+      const box = document.getElementById('optbox');
+      box.innerHTML = '';
+      q.o.forEach((opt,i)=>{
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = opt;
+        div.onclick = ()=> selectOpt(i);
+        box.appendChild(div);
+      });
+      document.getElementById('fill').style.width = (idx/quizData.length*100)+'%';
+      document.getElementById('nextBtn').disabled = true;
+      const fb = document.getElementById('fb');
+      fb.style.display='none';
+      fb.textContent='';
+      fb.className='feedback';
+    }
+
+    function selectOpt(i){
+      const q = quizData[idx];
+      const opts = document.querySelectorAll('.option');
+      opts.forEach((el,j)=>{
+        el.style.pointerEvents='none';
+        if(j===q.c) el.classList.add('correct');
+        else if(j===i && i!==q.c) el.classList.add('incorrect');
+      });
+      if(i===q.c){
+        correctCount++;
+        confetti({
+          particleCount:100,
+          spread:70,
+          origin:{ y:0.6 },
+          colors:[ getComputedStyle(document.documentElement).getPropertyValue('--accent1').trim(), getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim(), "#ffffff" ]
+        });
+      }
+      document.getElementById('nextBtn').disabled=false;
+    }
+
+    function nextQ(){
+      idx++;
+      loadQ();
+    }
+
+    function showResult(){
+      document.getElementById('quiz-screen').classList.remove('active');
+      document.getElementById('result-screen').classList.add('active');
+      const pct = Math.round(correctCount/quizData.length*100);
+      document.getElementById('scorePct').textContent = pct + '%';
+      document.getElementById('corr').textContent = correctCount;
+      document.getElementById('wrng').textContent = quizData.length - correctCount;
+      document.getElementById('msg').textContent =
+        pct>=80 ? '🏆 Excellent! You’re a Zama Pro!' :
+        pct>=60 ? '👏 Great job! You know your stuff!' :
+        pct>=40 ? '👍 Nice try! Keep improving!' :
+        '💪 Keep practising — you’ll get better!';
+      renderResultChart(correctCount, quizData.length-correctCount);
+    }
+
+    function renderResultChart(corr, wrong){
+      const ctx = document.getElementById('resultChart').getContext('2d');
+      new Chart(ctx, {
+        type:'doughnut',
+        data:{
+          labels:['Correct','Wrong'],
+          datasets:[{
+            data:[corr,wrong],
+            backgroundColor:['#51cf66','#f03e3e'],
+            hoverOffset:10
+          }]
+        },
+        options:{
+          cutout:'65%',
+          plugins:{
+            legend:{ position:'bottom', labels:{ color: getComputedStyle(document.documentElement).getPropertyValue('--text-light').trim() } },
+            tooltip:{ callbacks:{ label:(ctx)=> ctx.label + ': ' + ctx.parsed } }
+          }
+        }
+      });
+    }
+
+    function restartQuiz(){
+      idx=0; correctCount=0;
+      document.getElementById('result-screen').classList.remove('active');
+      document.getElementById('start-screen').classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
